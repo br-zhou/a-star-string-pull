@@ -1,9 +1,7 @@
 import store from "../../store/redux";
-import { getElapsedTime } from "./animationLoop";
 import { CanvasTools } from "./canvasTools";
 import { Heap } from "./myHeap";
 import { PathRenderer } from "./pathRenderer.js";
-import { Tile } from "./tile";
 import { MAP_OFFSET, TILE_SIZE } from "./tileMap";
 // import { MAP_OFFSET, TILE_SIZE } from "./tileMap";
 import { Vector2 } from "./vector2";
@@ -124,24 +122,12 @@ export class PathFinder {
     createPathTile(pos, color = "#FADA5E") {
         const pathTiles = this.pathTiles;
         if (!pathTiles[pos.x]) pathTiles[pos.x] = {};
-        pathTiles[pos.x][pos.y] = new Tile(
-            new Vector2(pos.x, pos.y),
-            "path",
-            getElapsedTime(),
-            color
-        );
-    }
-
-    update(dtSec, elapsedTimeSec) {
-        if (!this.isSearching) return;
-
-        const pathsTiles = this.pathTiles;
-
-        for (const gridX of Object.keys(pathsTiles)) {
-            for (const gridY of Object.keys(pathsTiles[gridX])) {
-                pathsTiles[gridX][gridY].update(dtSec, elapsedTimeSec);
-            }
-        }
+        // pathTiles[pos.x][pos.y] = new Tile(
+        //     new Vector2(pos.x, pos.y),
+        //     "path",
+        //     getElapsedTime(),
+        //     color
+        // );
     }
 
     getHeuristic(pos) {

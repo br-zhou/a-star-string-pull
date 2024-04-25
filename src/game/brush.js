@@ -1,6 +1,7 @@
 import { CanvasTools } from "./engine/canvasTools.js";
 import { Vector2 } from "./engine/vector2.js";
 import store from "../store/redux.js";
+import { TILE_SIZE } from "./engine/tileMap.js";
 
 export default class Brush {
   constructor(scene) {
@@ -18,7 +19,7 @@ export default class Brush {
     document.addEventListener("keydown", this.onKeyDown);
     this.canvas.addEventListener("mousedown", this.onMouseDown);
     this.canvas.addEventListener("mouseup", this.onMouseUp);
-    this.canvas.addEventListener("mousemove", this.onMouseMove);
+    this.canvas.addEventListener("pointermove", this.onMouseMove);
     this.canvas.addEventListener("mouseleave", this.onMouseUp);
   }
 
@@ -87,10 +88,10 @@ export default class Brush {
         this.paint(this.mouseGridIndex, "wall");
         break;
       case "start":
-        if (!this.mouseDrag) this.setStart(this.mouseGridIndex);
+        if (!this.mouseDrag) this.setStart(this.mouseWorldPos);
         break;
       case "goal":
-        if (!this.mouseDrag) this.addGoal(this.mouseGridIndex);
+        if (!this.mouseDrag) this.addGoal(this.mouseWorldPos);
         break;
       case "eraser":
         this.erase(this.mouseGridIndex);
@@ -100,22 +101,22 @@ export default class Brush {
     }
   }
 
-  addGoal(gridPos) {
-    this.delete(gridPos, "goal");
+  addGoal(worldPos) {
+    this.delete(worldPos, "goal");
     store.dispatch({
-      type: "add-goal",
-      x: gridPos.x,
-      y: gridPos.y,
+      type: "set-goal",
+      x: worldPos.x,
+      y: worldPos.y,
     });
   }
 
-  setStart(gridPos) {
-    this.delete(gridPos, "start");
+  setStart(worldPos) {
+    this.delete(worldPos, "start");
 
     store.dispatch({
       type: "set-start",
-      x: gridPos.x,
-      y: gridPos.y,
+      x: worldPos.x,
+      y: worldPos.y,
     });
   }
 
@@ -160,18 +161,32 @@ export default class Brush {
   render = () => {
     const fullState = store.getState();
     if (fullState.isSearching) return;
-    
-    const tileEntity = this.tileMap.tileIndexToEntity(this.mouseGridIndex);
 
-    const paintable = this.isPaintable(this.mouseGridIndex);
-    const brushRenderFunc = paintable
-      ? this.tools.drawRectOutline
-      : this.tools.drawRect;
-    brushRenderFunc(
-      tileEntity.position_,
-      tileEntity.size_.x,
-      tileEntity.size_.y,
-      paintable ? "#FFFFFF" : "rgba(255,0,0,0.5)"
-    );
+    if (fullState.brushType === "start" || fullState.brushType === "goal") {
+      // Render Point brush
+      const mouse = this.mouseWorldPos;
+      this.tools.drawCircle(
+        {
+          x: mouse.x,
+          y: mouse.y,
+        },
+        TILE_SIZE / 4,
+        "rgba(255,255,255,0.5)"
+      );
+    } else {
+      // Render grid brush
+      const tileEntity = this.tileMap.tileIndexToEntity(this.mouseGridIndex);
+
+      const paintable = this.isPaintable(this.mouseGridIndex);
+      const brushRenderFunc = paintable
+        ? this.tools.drawRectOutline
+        : this.tools.drawRect;
+      brushRenderFunc(
+        tileEntity.position_,
+        tileEntity.size_.x,
+        tileEntity.size_.y,
+        paintable ? "#FFFFFF" : "rgba(255,0,0,0.5)"
+      );
+    }
   };
 }

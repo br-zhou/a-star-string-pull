@@ -26,60 +26,55 @@ export class TileMap {
 
   reduxSubscriptionHandler = () => {
     const slice = this.getReduxSlice();
-    this.mapData_ = {...slice};
-  }
-
-  update(dtSec, elapsedTimeSec) {
-    // todo: implement tile update calls
-
-    // update blocks
-    if (this.mapData_.tileData != null) {
-      // todo: optimize rendering to only show tiles visible to camera
-      for (const gridX of Object.keys(this.mapData_.tileData)) {
-        for (const gridY of Object.keys(this.mapData_.tileData[gridX])) {
-          this.mapData_.tileData[gridX][gridY].update(dtSec, elapsedTimeSec);
-        }
-      }
-    }
-
-    // update start
-    if (this.mapData_.start != null) {
-      this.mapData_.start.update(dtSec, elapsedTimeSec);
-    }
-
-    // update goals
-
-    for (const gridX of Object.keys(this.mapData_.goals)) {
-      for (const gridY of Object.keys(this.mapData_.goals[gridX])) {
-        this.mapData_.goals[gridX][gridY].update(dtSec, elapsedTimeSec);
-      }
-    }
-
-    this.pathFinder.update(dtSec, elapsedTimeSec);
+    this.mapData_ = { ...slice };
   }
 
   render() {
     this.pathFinder.render();
-    
+
     if (this.mapData_.tileData != null) {
-      // todo: optimize rendering to only show tiles visible to camera
       for (const gridX of Object.keys(this.mapData_.tileData)) {
         for (const gridY of Object.keys(this.mapData_.tileData[gridX])) {
-          this.mapData_.tileData[gridX][gridY].render();
+          this.tools.drawRect(
+            {
+              x: gridX * TILE_SIZE + MAP_OFFSET.x,
+              y: gridY * TILE_SIZE + MAP_OFFSET.y,
+            },
+            TILE_SIZE,
+            TILE_SIZE,
+            "#3A3B3C"
+          );
         }
       }
     }
 
-    if (this.mapData_.start != null) {
-      this.mapData_.start.render();
+    const start = this.mapData_.start;
+    if (start != null) {
+      this.tools.drawCircle(
+        {
+          x: start.x,
+          y: start.y,
+        },
+        TILE_SIZE / 4,
+        "#00FF00"
+      );
+      console.log("start")
     }
 
-    for (const gridX of Object.keys(this.mapData_.goals)) {
-      for (const gridY of Object.keys(this.mapData_.goals[gridX])) {
-        this.mapData_.goals[gridX][gridY].render();
-      }
+    const goal = this.mapData_.goal;
+    if (goal != null) {
+      this.tools.drawCircle(
+        {
+          x: goal.x,
+          y: goal.y,
+        },
+        TILE_SIZE / 4,
+        "#FF0000"
+      );
+      console.log("goal");
     }
 
+    
     this.tools.drawRectOutline(
       new Vector2(0, (this.mapData_.height - 1) * TILE_SIZE),
       this.mapData_.width * TILE_SIZE,

@@ -13,7 +13,7 @@ export class Scene {
   }
 
   update(dtSec, elapsedTimeSec) {
-    this.tileMap.update(dtSec, elapsedTimeSec);
+    // pass
   }
 
   /**
