@@ -2,6 +2,7 @@ import store from "../../store/redux";
 import { getElapsedTime } from "./animationLoop";
 import { CanvasTools } from "./canvasTools";
 import { Heap } from "./myHeap";
+import { PathRenderer } from "./pathRenderer.js";
 import { Tile } from "./tile";
 import { MAP_OFFSET, TILE_SIZE } from "./tileMap";
 // import { MAP_OFFSET, TILE_SIZE } from "./tileMap";
@@ -17,6 +18,7 @@ export class PathFinder {
         this.heap = new Heap();
         this.stepDelay = null;
         this.finalPath = [];
+        this.pathRenderer = new PathRenderer();
     }
 
     reduxSubscriptionHandler = () => {
@@ -171,8 +173,8 @@ export class PathFinder {
             }
         }
 
-
         this.renderFinalPath();
+        this.pathRenderer.render();
     }
 
     renderFinalPath() {
