@@ -9,7 +9,7 @@ export class Camera {
   constructor() {
     this.canvas_ = new Canvas();
     this.ctx_ = this.canvas_.getContext();
-    this.position_ = new Vector2();
+    this.position_ = new Vector2(25, 22);
     this.fov_ = 75;
     this.minFov = 15
     this.maxFov = 500;
