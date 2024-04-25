@@ -5,11 +5,7 @@ import { TILE_SIZE, MAP_OFFSET } from "./tileMap.js";
 export class PathRenderer {
   constructor() {
     this.tools = new CanvasTools();
-    this.nodes = [
-      new Vector2(0, 0),
-      new Vector2(5, 5),
-      new Vector2(4, 5.5),
-    ];
+    this.nodes = [];
     this.pathColor = "#FF0000";
   }
 

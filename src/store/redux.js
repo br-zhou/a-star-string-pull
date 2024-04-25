@@ -13,14 +13,13 @@ const initialState = {
         goal: null,
     },
     modalMsg: null,
-    stepDelay: 25,
+    stepDelay: 500,
 };
 
 const reducer = (state = initialState, action) => {
     let result = { ...state };
 
     const tileData = result.mapData.tileData;
-    const goalData = result.mapData.goal;
 
     switch (action.type) {
         case "update-settings":

@@ -58,7 +58,6 @@ export class TileMap {
         TILE_SIZE / 4,
         "#00FF00"
       );
-      console.log("start")
     }
 
     const goal = this.mapData_.goal;
@@ -71,7 +70,6 @@ export class TileMap {
         TILE_SIZE / 4,
         "#FF0000"
       );
-      console.log("goal");
     }
 
     
