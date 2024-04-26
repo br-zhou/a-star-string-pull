@@ -2,9 +2,11 @@ import store from "../../store/redux";
 import { CanvasTools } from "./canvasTools";
 import { Heap } from "./myHeap";
 import { PathRenderer } from "./pathRenderer.js";
+import { Vector2 } from "./vector2.js";
 
 export class PathFinder {
-    constructor() {
+    constructor(tileMap) {
+        this.tileMap = tileMap;
         this.mapData = null;
         this.isSearching = false;
         store.subscribe(this.reduxSubscriptionHandler);
@@ -27,6 +29,7 @@ export class PathFinder {
 
     startSearch = (state) => {
         this.finalPath = [];
+        this.pathRenderer.clear();
         this.heap.clear();
         this.mapData = JSON.parse(JSON.stringify(state.mapData)); // deep copy
         this.stepDelay = state.stepDelay;
@@ -37,6 +40,9 @@ export class PathFinder {
         // insert start node into heap
         this.pathRenderer.addNode(startPosition)
         this.pathRenderer.addNode(goalPosition)
+
+        this.startPositionGrid = this.convertPointToGrid(startPosition);
+        this.goalPositionGrid = this.convertPointToGrid(goalPosition);
 
         console.log(startPosition)
 
@@ -73,8 +79,15 @@ export class PathFinder {
         return Math.abs(posA.x - posB.x) + Math.abs(posA.y - posB.y);
     }
 
+    convertPointToGrid = (point) => {
+        return new Vector2(Math.floor(point.x), Math.ceil(point.y));
+    }
+
     render() {
         if (!this.isSearching) return;
+
+        this.tileMap.colorGrid(this.startPositionGrid, "rgba(0, 255, 0, 0.25)");
+        this.tileMap.colorGrid(this.goalPositionGrid, "rgba(255, 0, 0, 0.25)");
 
         this.pathRenderer.render();
     }

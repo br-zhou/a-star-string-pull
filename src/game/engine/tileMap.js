@@ -13,7 +13,7 @@ export class TileMap {
   constructor() {
     this.mapData_ = null;
     this.tools = new CanvasTools();
-    this.pathFinder = new PathFinder();
+    this.pathFinder = new PathFinder(this);
     store.subscribe(this.reduxSubscriptionHandler);
 
     this.mapData_ = this.getReduxSlice();
