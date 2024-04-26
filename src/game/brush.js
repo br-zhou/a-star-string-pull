@@ -88,10 +88,10 @@ export default class Brush {
         this.paint(this.mouseGridIndex, "wall");
         break;
       case "start":
-        if (!this.mouseDrag) this.setStart(this.mouseWorldPos);
+        if (!this.mouseDrag) this.setStart(this.tileMap.positionToGrid(this.mouseWorldPos));
         break;
       case "goal":
-        if (!this.mouseDrag) this.addGoal(this.mouseWorldPos);
+        if (!this.mouseDrag) this.setGoal(this.tileMap.positionToGrid(this.mouseWorldPos));
         break;
       case "eraser":
         this.erase(this.mouseGridIndex);
@@ -101,7 +101,7 @@ export default class Brush {
     }
   }
 
-  addGoal(worldPos) {
+  setGoal(worldPos) {
     this.delete(worldPos, "goal");
     store.dispatch({
       type: "set-goal",

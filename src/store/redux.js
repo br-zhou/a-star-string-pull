@@ -46,8 +46,8 @@ const reducer = (state = initialState, action) => {
             if (result.isSearching === false) {
                 if (result.mapData.start === null) {
                     result.modalMsg = ["ERROR", "Must have starting tile for search!"];
-                } else if (Object.keys(result.mapData.goal).length === 0) {
-                    result.modalMsg = ["ERROR", "Must have at least 1 goal tile for search!"];
+                } else if (result.mapData.goal === null) {
+                    result.modalMsg = ["ERROR", "Must have a goal tile for search!"];
                 } else {
                     result.isSearching = true;
                     result.modalMsg = null;

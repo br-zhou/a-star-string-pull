@@ -6,7 +6,7 @@ export class PathRenderer {
   constructor() {
     this.tools = new CanvasTools();
     this.nodes = [];
-    this.pathColor = "#FF0000";
+    this.pathColor = "#FFFF00";
   }
 
   drawCircleAtNode(node) {
@@ -14,7 +14,7 @@ export class PathRenderer {
     this.tools.drawCircle(
       {
         x: node.x * TILE_SIZE + MAP_OFFSET.x,
-        y: node.y * TILE_SIZE + MAP_OFFSET.y - TILE_SIZE,
+        y: node.y * TILE_SIZE + MAP_OFFSET.y,
       },
       SIZE,
       this.pathColor
@@ -37,12 +37,12 @@ export class PathRenderer {
     for (let i = 0; i < this.nodes.length - 1; i++) {
       const startPoint = new Vector2(
         this.nodes[i].x * TILE_SIZE + MAP_OFFSET.x,
-        this.nodes[i].y * TILE_SIZE + MAP_OFFSET.y - TILE_SIZE
+        this.nodes[i].y * TILE_SIZE + MAP_OFFSET.y
       );
 
       const endPoint = new Vector2(
         this.nodes[i + 1].x * TILE_SIZE + MAP_OFFSET.x,
-        this.nodes[i + 1].y * TILE_SIZE + MAP_OFFSET.y - TILE_SIZE
+        this.nodes[i + 1].y * TILE_SIZE + MAP_OFFSET.y
       );
 
       this.tools.drawLine(startPoint, endPoint, this.pathColor, WIDTH);

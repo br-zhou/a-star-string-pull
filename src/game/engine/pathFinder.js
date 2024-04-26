@@ -35,6 +35,10 @@ export class PathFinder {
         const goalPosition = this.mapData.goal;
 
         // insert start node into heap
+        this.pathRenderer.addNode(startPosition)
+        this.pathRenderer.addNode(goalPosition)
+
+        console.log(startPosition)
 
         clearInterval(this.stepIntervalId);
         this.stepIntervalId = setInterval(this.step, this.stepDelay);

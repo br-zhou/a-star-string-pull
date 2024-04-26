@@ -50,10 +50,11 @@ export class TileMap {
 
     const start = this.mapData_.start;
     if (start != null) {
+      const startPosition = this.gridIndexToPosition(start);
       this.tools.drawCircle(
         {
-          x: start.x,
-          y: start.y,
+          x: startPosition.x,
+          y: startPosition.y,
         },
         TILE_SIZE / 4,
         "#00FF00"
@@ -62,17 +63,18 @@ export class TileMap {
 
     const goal = this.mapData_.goal;
     if (goal != null) {
+      const goalPosition = this.gridIndexToPosition(goal);
       this.tools.drawCircle(
         {
-          x: goal.x,
-          y: goal.y,
+          x: goalPosition.x,
+          y: goalPosition.y,
         },
         TILE_SIZE / 4,
         "#FF0000"
       );
     }
 
-    
+
     this.tools.drawRectOutline(
       new Vector2(0, (this.mapData_.height - 1) * TILE_SIZE),
       this.mapData_.width * TILE_SIZE,
@@ -132,6 +134,21 @@ export class TileMap {
     const gridIndex = {
       x: Math.floor(OffsetPosition.x / TILE_SIZE),
       y: Math.ceil(OffsetPosition.y / TILE_SIZE),
+    };
+
+    return gridIndex;
+  }
+
+  /**
+   * @param {number, number} position world position
+   * @returns {number, number} index in tileGrid
+   */
+  positionToGrid({ x, y }) {
+    const OffsetPosition = { x: x - MAP_OFFSET.x, y: y - MAP_OFFSET.y };
+
+    const gridIndex = {
+      x: OffsetPosition.x / TILE_SIZE,
+      y: OffsetPosition.y / TILE_SIZE,
     };
 
     return gridIndex;
