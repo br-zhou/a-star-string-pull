@@ -35,6 +35,10 @@ export class Vector2 {
     return new Vector2(vector.x, vector.y);
   }
 
+  static equals(a, b) {
+    return a.x === b.x && a.y === b.y;
+  }
+
   set(vector) {
     this.x = vector.x;
     this.y = vector.y;

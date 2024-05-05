@@ -51,7 +51,5 @@ export class PathRenderer {
     for (let node of this.nodes) {
       this.drawCircleAtNode(node);
     }
-
-    console.log("Render Path");
   }
 }

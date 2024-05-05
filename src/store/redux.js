@@ -64,9 +64,11 @@ const reducer = (state = initialState, action) => {
             return result;
         case "set-start":
             result.mapData.start = new Vector2(action.x, action.y);
+            // result.mapData.start = new Vector2(Math.round(action.x), Math.round(action.y));
             return result;
         case "set-goal":
             result.mapData.goal = new Vector2(action.x, action.y);
+            // result.mapData.goal = new Vector2(Math.round(action.x), Math.round(action.y));
             return result;
         case "add-tile":
             if (!tileData[action.x]) {
