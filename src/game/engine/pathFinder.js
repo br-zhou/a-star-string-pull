@@ -38,8 +38,8 @@ export class PathFinder {
         const goalPosition = this.mapData.goal;
 
         // insert start node into heap
-        this.pathRenderer.addNode(startPosition)
-        this.pathRenderer.addNode(goalPosition)
+        // this.pathRenderer.addNode(startPosition)
+        // this.pathRenderer.addNode(goalPosition)
 
         this.startPositionGrid = this.convertPointToGrid(startPosition);
         this.goalPositionGrid = this.convertPointToGrid(goalPosition);
@@ -110,45 +110,87 @@ export class PathFinder {
 
         const stepAxis = Math.abs(dx) > Math.abs(dy) ? 'x' : 'y';
 
-        const dxSign = Math.sign(dx);
-        const dySign = Math.sign(dy);
-
-
-        const startGrid = this.convertPointToGrid(start);
-        const endGrid = this.convertPointToGrid(end);
-
-        result.push(startGrid);
-
-        let stepPosition = Vector2.copy(start);
-        let stepGrid = this.convertPointToGrid(stepPosition);
-        if (stepAxis && dxSign === 1) {
-            while (true) {
-                const xStep = stepPosition.x % 1 === 0 ? 1 : Math.ceil(stepPosition.x) - stepPosition.x;
-                const yStep = dy / dx * xStep;
-
-                const nextPosition = new Vector2(stepPosition.x + xStep, stepPosition.y + yStep);
-                const nextGrid = this.convertPointToGrid(nextPosition);
-
-                result.push(Vector2.copy(nextGrid))
-
-                // if y increases when step taken
-                if (nextGrid.y !== stepGrid.y) {
-                    result.push(new Vector2(stepGrid.x, stepGrid.y + dySign));
-                }
-
-                stepPosition = nextPosition;
-                stepGrid = nextGrid;
-
-                if (Vector2.equals(stepGrid, endGrid)) {
-                    break;
-                }
+        if (stepAxis === 'x') {
+            // if step axis was y, we would have to swap x and y
+            const slope = dy / dx;
+            const steps = this.getStepsFrom(start.x, end.x);
+            const points = [];
+            for (let x of steps) {
+                const y = start.y + slope * (x - start.x);
+                const stepPosition = new Vector2(x, y);
+                points.push(stepPosition);
+                // for rendering
+                this.pathRenderer.addNode(stepPosition);
             }
+            console.log(points);
 
+            for (let i = 0; i < points.length - 1; i++) {
+                const point = points[i];
+                const nextPoint = points[i + 1];
+                
+                const pointGrid = this.convertPointToGrid(point);
+                const nextPointGrid = this.convertPointToGrid(nextPoint);
+
+                const small = Math.min(pointGrid.y, nextPointGrid.y);
+                const large = Math.max(pointGrid.y, nextPointGrid.y);
+
+                for (let i = small; i <= large; i++) {
+                    result.push(new Vector2(pointGrid.x, i));
+                }
+
+            }
+        } else if (stepAxis === 'y') {
+            // if step axis was x, we would have to swap y and x
+            const slope = dx / dy;
+            const steps = this.getStepsFrom(start.y, end.y);
+            const points = [];
+            for (let y of steps) {
+                const x = start.x + slope * (y - start.y);
+                const stepPosition = new Vector2(x, y);
+                points.push(stepPosition);
+                // for rendering
+                this.pathRenderer.addNode(stepPosition);
+            }
+            console.log(points);
+
+            for (let i = 0; i < points.length - 1; i++) {
+                const point = points[i];
+                const nextPoint = points[i + 1];
+                
+                const pointGrid = this.convertPointToGrid(point);
+                const nextPointGrid = this.convertPointToGrid(nextPoint);
+
+                const small = Math.min(pointGrid.x, nextPointGrid.x);
+                const large = Math.max(pointGrid.x, nextPointGrid.x);
+
+                for (let i = small; i <= large; i++) {
+                    result.push(new Vector2(i, nextPointGrid.y));
+                }
+
+            }
         }
 
         return result;
     }
 
+    getStepsFrom(a, b) {
+        const result = [];
+
+        const start = Math.min(a, b);
+        const end = Math.max(a, b);
+
+        if (start !== Math.ceil(start)) {
+            result.push(start);
+        }
+
+        for (let i = Math.ceil(start); i < end; i++) {
+            result.push(i);
+        }
+
+        result.push(end);
+
+        return result;
+    }
 
     getManhattanDist(posA, posB) {
         return Math.abs(posA.x - posB.x) + Math.abs(posA.y - posB.y);
@@ -166,6 +208,12 @@ export class PathFinder {
 
         for (let grid of this.renderGrids) {
             this.tileMap.colorGrid(grid, "rgba(255, 255, 255, 0.25)");
+        }
+
+        if (this.stepPoints) {
+            for (let point of this.stepPoints) {
+                this.tileMap.colorGrid(this.convertPointToGrid(point), "rgba(255, 255, 255, 0.25)");
+            }
         }
 
         this.pathRenderer.render();

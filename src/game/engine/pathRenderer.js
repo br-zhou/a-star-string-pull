@@ -10,7 +10,7 @@ export class PathRenderer {
   }
 
   drawCircleAtNode(node) {
-    const SIZE = TILE_SIZE * 0.2;
+    const SIZE = TILE_SIZE * 0.1;
     this.tools.drawCircle(
       {
         x: node.x * TILE_SIZE + MAP_OFFSET.x,
@@ -32,7 +32,7 @@ export class PathRenderer {
   render() {
     if (this.nodes.length === 0) return;
 
-    const WIDTH = TILE_SIZE * 0.15;
+    const WIDTH = TILE_SIZE * 0.05;
 
     for (let i = 0; i < this.nodes.length - 1; i++) {
       const startPoint = new Vector2(
