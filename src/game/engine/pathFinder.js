@@ -1,8 +1,10 @@
 import store from "../../store/redux";
+import { OctalNode } from "./anyaNodes.js";
 import { CanvasTools } from "./canvasTools";
 import { Heap } from "./myHeap";
 import { PathRenderer } from "./pathRenderer.js";
 import { Vector2 } from "./vector2.js";
+import { TILE_SIZE } from "./tileMap.js";
 
 export class PathFinder {
     constructor(tileMap) {
@@ -11,7 +13,7 @@ export class PathFinder {
         this.isSearching = false;
         store.subscribe(this.reduxSubscriptionHandler);
         this.tools = new CanvasTools();
-        this.heap = new Heap();
+        this.heap = new Heap(this.nodeSortFunction);
         this.stepDelay = null;
         this.finalPath = [];
         this.pathRenderer = new PathRenderer();
@@ -33,13 +35,13 @@ export class PathFinder {
         this.heap.clear();
         this.mapData = JSON.parse(JSON.stringify(state.mapData)); // deep copy
         this.stepDelay = state.stepDelay;
+        this.usedNodes = {};
 
         const startPosition = this.mapData.start;
         const goalPosition = this.mapData.goal;
 
         // insert start node into heap
-        // this.pathRenderer.addNode(startPosition)
-        // this.pathRenderer.addNode(goalPosition)
+        this.heap.insert(new OctalNode(null, startPosition, 0, this.getDist(startPosition, goalPosition)));
 
         this.startPositionGrid = this.convertPointToGrid(startPosition);
         this.goalPositionGrid = this.convertPointToGrid(goalPosition);
@@ -52,23 +54,37 @@ export class PathFinder {
     }
 
     step = () => {
+        console.log("STEP");
+
         const heap = this.heap;
 
         if (!heap.isEmpty()) {
             const node = heap.remove();
-            const gridIndex = node.gridIndex;
-            this.createPathTile(gridIndex);
+            if (this.nodeIsGoal(node)) {
+                // TODO: this.finalPath = node.path;
+                this.finalPath = this.generatePath(node);
 
-            if (this.tileIsGoal(gridIndex)) {
-                this.finalPath = node.path;
+                for (let position of this.finalPath) {
+                    this.pathRenderer.addNode(position);
+                }
+
                 this.endAlgorithmn();
                 return;
             } else {
-                this.addNeighbourToHeap(node);
+                this.addNeighborsToHeap(node);
             }
         } else {
             this.endAlgorithmn();
         }
+    }
+
+    generatePath = (node) => {
+        const path = [];
+        while (node) {
+            path.push(node.position);
+            node = node.parent;
+        }
+        return path.reverse();
     }
 
     endAlgorithmn() {
@@ -76,6 +92,59 @@ export class PathFinder {
         this.renderGrids = this.lineCheck(this.startPosition, this.endPosition);
         this.algorithmFinished = true;
         console.log("ALGORITHMN COMPLETE!");
+    }
+
+    addNeighborsToHeap = (node) => {
+        // insert top
+        this.heap.insert(this.createNeighborNode(node, new Vector2(0, 1)));
+        this.heap.insert(this.createNeighborNode(node, new Vector2(1, 1)));
+        this.heap.insert(this.createNeighborNode(node, new Vector2(1, 0)));
+        this.heap.insert(this.createNeighborNode(node, new Vector2(1, -1)));
+        this.heap.insert(this.createNeighborNode(node, new Vector2(0, -1)));
+        this.heap.insert(this.createNeighborNode(node, new Vector2(-1, -1)));
+        this.heap.insert(this.createNeighborNode(node, new Vector2(-1, 0)));
+        this.heap.insert(this.createNeighborNode(node, new Vector2(-1, 1)));
+    }
+
+    nodePositionAlreadyUsed = (position) => {
+        const { x, y } = position;
+        return this.usedNodes[x] && this.usedNodes[x][y];
+    }
+
+    addPositionToUsedNodes = (position) => {
+        if (!this.usedNodes[position.x]) {
+            this.usedNodes[position.x] = {};
+        }
+        this.usedNodes[position.x][position.y] = true;
+    }
+
+    createNeighborNode = (parentNode, offset) => {
+        const position = new Vector2(parentNode.position.x + offset.x, parentNode.position.y + offset.y);
+
+        if (!this.validNodePosition(position)) return null;
+        this.addPositionToUsedNodes(position);
+
+        const pathCost = parentNode.pathCost + offset.magnitude();
+        const heuristic = this.getDist(position, this.endPosition);
+        const newNode = new OctalNode(parentNode, position, pathCost, heuristic);
+        newNode.path = [...parentNode.path, position];
+        return newNode;
+    }
+
+    validNodePosition = (position) => {
+        if (position.x < 0 || position.y < 0) return false;
+        if (position.x >= this.mapData.width || position.y >= this.mapData.height) return false;
+        if (this.nodePositionAlreadyUsed(position)) return false;
+        return true;
+    }
+
+    nodeIsGoal = (node) => {
+        return node.position.x === this.endPosition.x && node.position.y === this.endPosition.y;
+    }
+
+    // returns true if 'a' has higher priority than 'b'
+    nodeSortFunction = (a, b) => {
+        return a.value <= b.value;
     }
 
     DDACheck = (start, end) => {
@@ -120,14 +189,14 @@ export class PathFinder {
                 const stepPosition = new Vector2(x, y);
                 points.push(stepPosition);
                 // for rendering
-                this.pathRenderer.addNode(stepPosition);
+                // this.pathRenderer.addNode(stepPosition);
             }
             console.log(points);
 
             for (let i = 0; i < points.length - 1; i++) {
                 const point = points[i];
                 const nextPoint = points[i + 1];
-                
+
                 const pointGrid = this.convertPointToGrid(point);
                 const nextPointGrid = this.convertPointToGrid(nextPoint);
 
@@ -151,12 +220,11 @@ export class PathFinder {
                 // for rendering
                 this.pathRenderer.addNode(stepPosition);
             }
-            console.log(points);
 
             for (let i = 0; i < points.length - 1; i++) {
                 const point = points[i];
                 const nextPoint = points[i + 1];
-                
+
                 const pointGrid = this.convertPointToGrid(point);
                 const nextPointGrid = this.convertPointToGrid(nextPoint);
 
@@ -196,15 +264,32 @@ export class PathFinder {
         return Math.abs(posA.x - posB.x) + Math.abs(posA.y - posB.y);
     }
 
+    getDist(posA, posB) {
+        return Math.sqrt(Math.pow(posB.x - posA.x, 2) + Math.pow(posB.y - posA.y, 2));
+    }
+
     convertPointToGrid = (point) => {
         return new Vector2(Math.floor(point.x), Math.ceil(point.y));
     }
 
     render() {
-        if (!this.isSearching || !this.algorithmFinished) return;
+        if (!this.isSearching) return;
 
-        // this.tileMap.colorGrid(this.startPositionGrid, "rgba(0, 255, 0, 0.25)");
-        // this.tileMap.colorGrid(this.goalPositionGrid, "rgba(255, 0, 0, 0.25)");
+        this.tileMap.colorGrid(this.startPositionGrid, "rgba(0, 255, 0, 0.25)");
+        this.tileMap.colorGrid(this.goalPositionGrid, "rgba(255, 0, 0, 0.25)");
+
+        for (let node of this.heap.nodes_) {
+            this.tools.drawCircle(
+                {
+                    x: node.position.x * TILE_SIZE,
+                    y: node.position.y * TILE_SIZE
+                },
+                1 / 4,
+                "rgba(255,255,255,0.5)"
+            );
+        }
+
+        if (!this.algorithmFinished) return;
 
         for (let grid of this.renderGrids) {
             this.tileMap.colorGrid(grid, "rgba(255, 255, 255, 0.25)");

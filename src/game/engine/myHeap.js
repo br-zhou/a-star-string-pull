@@ -1,27 +1,18 @@
-export class TileNode {
-    constructor(gridIndex, cost, heuristic, path = []) {
-        this.gridIndex = gridIndex;
-        this.pathCost = cost;
-        this.path = path;
-        this.heuristic = heuristic;
-        this.value = cost + heuristic;
-    }
-}
-
 /**
  * Based on: https://github.com/google/closure-library/blob/master/closure/goog/structs/heap.js
  */
 
 export class Heap {
-    constructor() {
+    constructor(sortFunction) {
         this.nodes_ = [];
+        // returns true if a has higher priority than b
+        this.sortFunction = sortFunction;
     }
 
-    insert(gridIndex, cost, heuristic, path = []) {
-        const nodes = this.nodes_;
-        const node = new TileNode(gridIndex, cost, heuristic, [...path, gridIndex])
-        nodes.push(node);
-        this.bubbleUp_(nodes.length - 1);
+    insert(node) {
+        if (node === null || node === undefined) return;
+        this.nodes_.push(node);
+        this.bubbleUp_(this.nodes_.length - 1);
     }
 
     bubbleUp_(index) {
@@ -30,7 +21,7 @@ export class Heap {
 
         while (index > 0) {
             const parentIndex = this.getParentIndex_(index);
-            if (nodes[parentIndex].value >= node.value) {
+            if (this.sortFunction(node, nodes[parentIndex])) {
                 nodes[index] = nodes[parentIndex];
                 index = parentIndex;
             } else {
@@ -58,20 +49,22 @@ export class Heap {
     sinkDown_(index) {
         const nodes = this.nodes_;
         const count = nodes.length;
-    
-        const node = nodes[index]; 
 
+        const node = nodes[index];
+
+        // TODO: rewrite using sort function
         // While current node has a child
         while (index < (count >> 1)) {
             const leftChildIndex = this.getLeftChildIndex(index);
             const rightChildIndex = this.getRightChildIndex(index);
 
             const smallerChildIndex = rightChildIndex < count &&
-                nodes[rightChildIndex].value < nodes[leftChildIndex].value ?
+                this.sortFunction(nodes[rightChildIndex], nodes[leftChildIndex]) ?
                 rightChildIndex :
                 leftChildIndex;
-            
-            if (nodes[smallerChildIndex].value > node.value) {
+
+            // if value of current node > value of smaller child
+            if (this.sortFunction(node.value, nodes[smallerChildIndex])) {
                 break;
             }
 
@@ -81,7 +74,7 @@ export class Heap {
         }
         nodes[index] = node;
     }
-    
+
     getLeftChildIndex(index) {
         return index * 2 + 1;
     }
@@ -104,5 +97,9 @@ export class Heap {
 
     clear() {
         this.nodes_.length = 0;
+    }
+
+    getNodesCopy() {
+        return JSON.parse(JSON.stringify(this.nodes_));
     }
 }

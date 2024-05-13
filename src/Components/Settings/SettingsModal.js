@@ -22,6 +22,7 @@ const SettingsModal = (props) => {
             if (newHeight <= 0) throw "Grid height must be a postitive integer.";
             if (newDelay < 0) throw "Step delay cannot be negative";
             
+
             store.dispatch({
                 type: "update-settings",
                 newWidth,
