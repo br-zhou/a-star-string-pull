@@ -64,7 +64,7 @@ export class Heap {
                 leftChildIndex;
 
             // if value of current node > value of smaller child
-            if (this.sortFunction(node.value, nodes[smallerChildIndex])) {
+            if (this.sortFunction(node, nodes[smallerChildIndex])) {
                 break;
             }
 
