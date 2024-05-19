@@ -13,7 +13,7 @@ const initialState = {
         goal: null,
     },
     modalMsg: null,
-    stepDelay: 150,
+    stepDelay: 10,
 };
 
 const reducer = (state = initialState, action) => {

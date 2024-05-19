@@ -34,6 +34,7 @@ export class PathFinder {
         this.pathRenderer.clear();
         this.heap.clear();
         this.mapData = JSON.parse(JSON.stringify(state.mapData)); // deep copy
+        this.tileData = this.mapData.tileData;
         this.stepDelay = state.stepDelay;
         this.usedNodes = {};
 
@@ -64,10 +65,6 @@ export class PathFinder {
                 // TODO: this.finalPath = node.path;
                 this.finalPath = this.generatePath(node);
 
-                for (let position of this.finalPath) {
-                    this.pathRenderer.addNode(position);
-                }
-
                 this.endAlgorithmn();
                 return;
             } else {
@@ -89,6 +86,12 @@ export class PathFinder {
 
     endAlgorithmn() {
         clearInterval(this.stepIntervalId);
+
+        for (let position of this.finalPath) {
+            this.pathRenderer.addNode(position);
+            console.log(position)
+        }
+
         this.renderGrids = this.lineCheck(this.startPosition, this.endPosition);
         this.algorithmFinished = true;
         console.log("ALGORITHMN COMPLETE!");
@@ -106,7 +109,7 @@ export class PathFinder {
         this.heap.insert(this.createNeighborNode(node, new Vector2(-1, 1)));
     }
 
-    nodePositionAlreadyUsed = (position) => {
+    nodePositionAlreadyCalculated = (position) => {
         const { x, y } = position;
         return this.usedNodes[x] && this.usedNodes[x][y];
     }
@@ -121,7 +124,11 @@ export class PathFinder {
     createNeighborNode = (parentNode, offset) => {
         const position = new Vector2(parentNode.position.x + offset.x, parentNode.position.y + offset.y);
 
-        if (!this.validNodePosition(position)) return null;
+        if (!this.validNewNodePosition(parentNode, offset)) return null;
+        
+        // NOTE: adding neighbors that aren't guaranteed to be in the final path
+        //  causes the result to be non-optimal. We currently allow this because
+        //  we are hoping that string pulling will fix the path.
         this.addPositionToUsedNodes(position);
 
         const pathCost = parentNode.pathCost + offset.magnitude();
@@ -131,11 +138,65 @@ export class PathFinder {
         return newNode;
     }
 
-    validNodePosition = (position) => {
+    validNewNodePosition = (parentNode, offset) => {
+        const position = new Vector2(parentNode.position.x + offset.x, parentNode.position.y + offset.y);
         if (position.x < 0 || position.y < 0) return false;
         if (position.x >= this.mapData.width || position.y >= this.mapData.height) return false;
-        if (this.nodePositionAlreadyUsed(position)) return false;
+
+        // avoid recalculating same position
+        if (this.nodePositionAlreadyCalculated(position)) return false;
+
+        // if point on diagonal wall return false
+        if (this.pointIsOnDiagonalWall(position)) return false;
+
+        if (offset.x === 0 && offset.y === 1) {
+            return !this.gridPositionContainsWall(this.getOffsetPosition(parentNode, new Vector2(0, 1))) ||
+                !this.gridPositionContainsWall(this.getOffsetPosition(parentNode, new Vector2(-1, 1)))
+        } else if (offset.x === 1 && offset.y === 1) {
+            return !this.gridPositionContainsWall(this.getOffsetPosition(parentNode, new Vector2(0, 1)))
+        } else if (offset.x === 1 && offset.y === 0) {
+            return !this.gridPositionContainsWall(this.getOffsetPosition(parentNode, new Vector2(0, 0))) ||
+                !this.gridPositionContainsWall(this.getOffsetPosition(parentNode, new Vector2(0, 1)))
+        } else if (offset.x === 1 && offset.y === -1) {
+            return !this.gridPositionContainsWall(this.getOffsetPosition(parentNode, new Vector2(0, 0)))
+        } else if (offset.x === 0 && offset.y === -1) {
+            return !this.gridPositionContainsWall(this.getOffsetPosition(parentNode, new Vector2(0, 0))) ||
+                !this.gridPositionContainsWall(this.getOffsetPosition(parentNode, new Vector2(-1, 0)))
+        } else if (offset.x === -1 && offset.y === -1) {
+            return !this.gridPositionContainsWall(this.getOffsetPosition(parentNode, new Vector2(-1, 0)))
+        } else if (offset.x === -1 && offset.y === 0) {
+            return !this.gridPositionContainsWall(this.getOffsetPosition(parentNode, new Vector2(-1, 0))) ||
+                !this.gridPositionContainsWall(this.getOffsetPosition(parentNode, new Vector2(-1, 1)))
+        } else if (offset.x === -1 && offset.y === 1) {
+            return !this.gridPositionContainsWall(this.getOffsetPosition(parentNode, new Vector2(-1, 1)))
+        }
+
+
         return true;
+    }
+
+    pointIsOnDiagonalWall = (position) => {
+        // 1 0
+        // 0 1
+        if (this.gridPositionContainsWall(Vector2.add(position, new Vector2(0, 0))) &&
+            this.gridPositionContainsWall(Vector2.add(position, new Vector2(-1, 1)))
+        ) return true;
+
+        // 0 1
+        // 1 0
+        if (this.gridPositionContainsWall(Vector2.add(position, new Vector2(-1, 0))) &&
+            this.gridPositionContainsWall(Vector2.add(position, new Vector2(0, 1)))
+        ) return true;
+
+        return false;
+    }
+
+    getOffsetPosition = (parentNode, offset) => {
+        return new Vector2(parentNode.position.x + offset.x, parentNode.position.y + offset.y);
+    }
+
+    gridPositionContainsWall = (gridPos) => {
+        return this.tileData[gridPos.x] && this.tileData[gridPos.x][gridPos.y];
     }
 
     nodeIsGoal = (node) => {
@@ -172,6 +233,18 @@ export class PathFinder {
         return [];
     }
 
+    checkValidLine = (start, end) => {
+        const points = this.lineCheck(start, end);
+
+        for (let point of points) {
+            if (this.gridPositionContainsWall(point)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
     lineCheck = (start, end) => {
         const result = [];
         const dx = end.x - start.x;
@@ -188,8 +261,6 @@ export class PathFinder {
                 const y = start.y + slope * (x - start.x);
                 const stepPosition = new Vector2(x, y);
                 points.push(stepPosition);
-                // for rendering
-                // this.pathRenderer.addNode(stepPosition);
             }
             console.log(points);
 
@@ -217,8 +288,6 @@ export class PathFinder {
                 const x = start.x + slope * (y - start.y);
                 const stepPosition = new Vector2(x, y);
                 points.push(stepPosition);
-                // for rendering
-                this.pathRenderer.addNode(stepPosition);
             }
 
             for (let i = 0; i < points.length - 1; i++) {
