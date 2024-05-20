@@ -49,6 +49,7 @@ export class PathFinder {
         this.startPosition = startPosition;
         this.endPosition = goalPosition;
         this.algorithmFinished = false;
+        this.renderGrids = [];
 
         clearInterval(this.stepIntervalId);
         this.stepIntervalId = setInterval(this.step, this.stepDelay);
@@ -92,7 +93,15 @@ export class PathFinder {
             console.log(position)
         }
 
-        this.renderGrids = this.lineCheck(this.startPosition, this.endPosition);
+
+        for (let i = 0; i < this.finalPath.length - 1; i++) {
+            const start = this.finalPath[i];
+            const end = this.finalPath[i + 1];
+            const grids = this.lineCheck(start, end);
+            this.renderGrids.push(...grids);
+        }
+
+        // this.renderGrids = this.lineCheck(this.startPosition, this.endPosition);
         this.algorithmFinished = true;
         console.log("ALGORITHMN COMPLETE!");
     }
@@ -300,38 +309,36 @@ export class PathFinder {
         }
 
         // Trim ends of result
-        if (stepAxis === 'x') {
-            if (this.startPosition.y % 1 === 0) {
-                if (this.startPosition.y < this.endPosition.y) {
-                    console.log("SHIFTING Y");
-                    result.shift();
-                }
-            }
+        // if (stepAxis === 'x') {
+        //     if (this.startPosition.y % 1 === 0) {
+        //         if (this.startPosition.y < this.endPosition.y) {
+        //             console.log("SHIFTING Y");
+        //             result.shift();
+        //         }
+        //     }
 
-            if (this.endPosition.y % 1 === 0) {
-                if (this.endPosition.y < this.startPosition.y) {
-                    console.log("Popping Y");
-                    result.splice(result.length - 2, 1);
-                }
-            }
-        }
+        //     if (this.endPosition.y % 1 === 0) {
+        //         if (this.endPosition.y < this.startPosition.y) {
+        //             console.log("Popping Y");
+        //             result.splice(result.length - 2, 1);
+        //         }
+        //     }
+        // }
 
-        if (stepAxis === 'y') {
-            if (this.startPosition.x % 1 === 0) {
-                if (this.startPosition.x > this.endPosition.x) {
-                    result.pop();
-                }
-            }
+        // if (stepAxis === 'y') {
+        //     if (this.startPosition.x % 1 === 0) {
+        //         if (this.startPosition.x > this.endPosition.x) {
+        //             result.pop();
+        //         }
+        //     }
 
-            if (this.endPosition.x % 1 === 0) {
-                if (this.endPosition.x > this.startPosition.x) {
-                    result.splice(1, 1);
+        //     if (this.endPosition.x % 1 === 0) {
+        //         if (this.endPosition.x > this.startPosition.x) {
+        //             result.splice(1, 1);
 
-                }
-            }
-        }
-
-        // do same with end
+        //         }
+        //     }
+        // }
 
         return result;
     }

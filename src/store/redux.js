@@ -16,6 +16,19 @@ const initialState = {
     stepDelay: 10,
 };
 
+const addBarrierTile = (mapData, x, y, ) => {
+    const tileData = mapData.tileData;
+    if (!tileData[x]) {
+        tileData[x] = {};
+    }
+
+    if (tileData[x][y] && tileData[x][y] === "wall") return; // ignore walls
+    if (x < 0 || y < 0) return;
+    if (x >= mapData.width || y >= mapData.height) return;
+    
+    tileData[x][y] = "wall-barrier";
+}
+
 const reducer = (state = initialState, action) => {
     let result = { ...state };
 
@@ -75,9 +88,24 @@ const reducer = (state = initialState, action) => {
                 tileData[action.x] = {};
             }
 
-            if (tileData[action.x][action.y] && tileData[action.x][action.y].type === "wall") return result;
+            if (tileData[action.x][action.y] && tileData[action.x][action.y] === "wall") return result;
 
-            tileData[action.x][action.y] = 1;
+            tileData[action.x][action.y] = "wall";
+
+            addBarrierTile(result.mapData, action.x, action.y + 1);
+            addBarrierTile(result.mapData, action.x + 1, action.y + 1);
+            addBarrierTile(result.mapData, action.x + 1, action.y);
+            addBarrierTile(result.mapData, action.x + 1, action.y - 1);
+            addBarrierTile(result.mapData, action.x, action.y - 1);
+            addBarrierTile(result.mapData, action.x - 1, action.y - 1);
+            addBarrierTile(result.mapData, action.x - 1, action.y);
+            addBarrierTile(result.mapData, action.x - 1, action.y + 1);
+
+
+
+            
+
+            // add walk barriers
 
             return result;
         case "erase-tile":

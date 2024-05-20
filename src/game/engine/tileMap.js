@@ -35,6 +35,13 @@ export class TileMap {
     if (this.mapData_.tileData != null) {
       for (const gridX of Object.keys(this.mapData_.tileData)) {
         for (const gridY of Object.keys(this.mapData_.tileData[gridX])) {
+          const tileData = this.mapData_.tileData[gridX][gridY];
+          let tileColor = "rgba(255,0,0,0.25)";
+          
+          if (tileData === "wall") {
+            tileColor = "#3A3B3C";
+          }
+
           this.tools.drawRect(
             {
               x: gridX * TILE_SIZE + MAP_OFFSET.x,
@@ -42,7 +49,7 @@ export class TileMap {
             },
             TILE_SIZE,
             TILE_SIZE,
-            "#3A3B3C"
+            tileColor
           );
         }
       }
