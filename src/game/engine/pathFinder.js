@@ -110,6 +110,7 @@ export class PathFinder {
     }
 
     nodePositionAlreadyCalculated = (position) => {
+        // TODO: instead of checking usedNodes, compare path costs to node to determine if it should be re-added
         const { x, y } = position;
         return this.usedNodes[x] && this.usedNodes[x][y];
     }
@@ -125,7 +126,7 @@ export class PathFinder {
         const position = new Vector2(parentNode.position.x + offset.x, parentNode.position.y + offset.y);
 
         if (!this.validNewNodePosition(parentNode, offset)) return null;
-        
+
         // NOTE: adding neighbors that aren't guaranteed to be in the final path
         //  causes the result to be non-optimal. We currently allow this because
         //  we are hoping that string pulling will fix the path.
@@ -225,14 +226,6 @@ export class PathFinder {
         return result;
     }
 
-    BresenhamCheck = (start, end) => {
-        // Bresenham's line algorithm
-        const dx = end.x - start.x;
-        const dy = end.y - start.y;
-
-        return [];
-    }
-
     checkValidLine = (start, end) => {
         const points = this.lineCheck(start, end);
 
@@ -262,7 +255,6 @@ export class PathFinder {
                 const stepPosition = new Vector2(x, y);
                 points.push(stepPosition);
             }
-            console.log(points);
 
             for (let i = 0; i < points.length - 1; i++) {
                 const point = points[i];
@@ -307,6 +299,40 @@ export class PathFinder {
             }
         }
 
+        // Trim ends of result
+        if (stepAxis === 'x') {
+            if (this.startPosition.y % 1 === 0) {
+                if (this.startPosition.y < this.endPosition.y) {
+                    console.log("SHIFTING Y");
+                    result.shift();
+                }
+            }
+
+            if (this.endPosition.y % 1 === 0) {
+                if (this.endPosition.y < this.startPosition.y) {
+                    console.log("Popping Y");
+                    result.splice(result.length - 2, 1);
+                }
+            }
+        }
+
+        if (stepAxis === 'y') {
+            if (this.startPosition.x % 1 === 0) {
+                if (this.startPosition.x > this.endPosition.x) {
+                    result.pop();
+                }
+            }
+
+            if (this.endPosition.x % 1 === 0) {
+                if (this.endPosition.x > this.startPosition.x) {
+                    result.splice(1, 1);
+
+                }
+            }
+        }
+
+        // do same with end
+
         return result;
     }
 
@@ -344,8 +370,8 @@ export class PathFinder {
     render() {
         if (!this.isSearching) return;
 
-        this.tileMap.colorGrid(this.startPositionGrid, "rgba(0, 255, 0, 0.25)");
-        this.tileMap.colorGrid(this.goalPositionGrid, "rgba(255, 0, 0, 0.25)");
+        // this.tileMap.colorGrid(this.startPositionGrid, "rgba(0, 255, 0, 0.25)");
+        // this.tileMap.colorGrid(this.goalPositionGrid, "rgba(255, 0, 0, 0.25)");
 
         for (let node of this.heap.nodes_) {
             this.tools.drawCircle(
