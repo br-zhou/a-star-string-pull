@@ -112,9 +112,6 @@ export class PathFinder {
             const grids = this.lineCheck(start, end);
             this.renderGrids.push(...grids);
         }
-
-
-        console.log(this.checkValidLine(this.startPosition, this.endPosition))
         
 
         // this.renderGrids = this.lineCheck(this.startPosition, this.endPosition);
@@ -126,21 +123,25 @@ export class PathFinder {
     generatePulledPath = (path) => {
         const result = [];
 
-        let l = 0;
         let r = path.length - 1;
+        let l = 0;
 
-        while (r > l) {
+        while (l < r) {
             if (!this.checkValidLine(path[l], path[r])) {
-                r--;
+                l++;
             } else {
-                result.push(path[l]);
-                l = r;
-                r = path.length - 1;
+                result.push(path[r]);
+                r = l;
+                l = 0;
+
+                if (result[result.length - 1] === path[r]) {
+                    return result;
+                }
             }
         }
 
-        result.push(path[l]);
         result.push(path[r]);
+        result.push(path[l]);
 
         return result;
     }
@@ -395,7 +396,6 @@ export class PathFinder {
 
                     if (this.endPosition.x % 1 === 0) {
                         if (this.endPosition.x > this.startPosition.x) {
-                            console.log(result[1])
                             result.splice(1, 1);
                         }
                     }
@@ -410,11 +410,6 @@ export class PathFinder {
                         }
                     }
 
-                    // if (this.endPosition.x % 1 === 0) {
-                    //     if (this.endPosition.x > this.startPosition.x) {
-                    //         result.pop();
-                    //     }
-                    // }
                 } else {
                     if (this.startPosition.x % 1 === 0) {
                         if (this.startPosition.x > this.endPosition.x) {
