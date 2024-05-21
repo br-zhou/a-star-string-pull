@@ -114,6 +114,9 @@ export class PathFinder {
         }
 
 
+        console.log(this.checkValidLine(this.startPosition, this.endPosition))
+        
+
         // this.renderGrids = this.lineCheck(this.startPosition, this.endPosition);
 
         this.algorithmFinished = true;
@@ -124,20 +127,20 @@ export class PathFinder {
         const result = [];
 
         let l = 0;
-        let r = l + 1;
+        let r = path.length - 1;
 
-        while (r < path.length) {
-            if (this.checkValidLine(path[l], path[r])) {
-                r++;
+        while (r > l) {
+            if (!this.checkValidLine(path[l], path[r])) {
+                r--;
             } else {
                 result.push(path[l]);
                 l = r;
-                r = l + 1;
+                r = path.length - 1;
             }
         }
 
         result.push(path[l]);
-        result.push(path[r - 1]);
+        result.push(path[r]);
 
         return result;
     }
@@ -272,10 +275,10 @@ export class PathFinder {
     }
 
     checkValidLine = (start, end) => {
-        const points = this.lineCheck(start, end);
+        const gridCells = this.lineCheck(start, end);
 
-        for (let point of points) {
-            if (this.gridPositionContainsWall(point)) {
+        for (let cell of gridCells) {
+            if (this.gridPositionContainsWall(cell)) {
                 return false;
             }
         }
