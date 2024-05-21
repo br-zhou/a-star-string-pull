@@ -30,13 +30,11 @@ export class TileMap {
   }
 
   render() {
-    this.pathFinder.render();
-
     if (this.mapData_.tileData != null) {
       for (const gridX of Object.keys(this.mapData_.tileData)) {
         for (const gridY of Object.keys(this.mapData_.tileData[gridX])) {
           const tileData = this.mapData_.tileData[gridX][gridY];
-          let tileColor = "rgba(255,0,0,0.25)";
+          let tileColor = "rgba(255,0,0,0.15)";
           
           if (tileData === "wall") {
             tileColor = "#3A3B3C";
@@ -88,6 +86,8 @@ export class TileMap {
       this.mapData_.height * TILE_SIZE,
       "#FFFFFF"
     );
+
+    this.pathFinder.render();
 
   }
 

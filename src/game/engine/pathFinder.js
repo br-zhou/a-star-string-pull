@@ -17,6 +17,8 @@ export class PathFinder {
         this.stepDelay = null;
         this.finalPath = [];
         this.pathRenderer = new PathRenderer();
+        this.pulledPathRenderer = new PathRenderer();
+        this.pulledPathRenderer.pathColor = "rgba(0, 255, 0, 0.5)";
     }
 
     reduxSubscriptionHandler = () => {
@@ -32,6 +34,7 @@ export class PathFinder {
     startSearch = (state) => {
         this.finalPath = [];
         this.pathRenderer.clear();
+        this.pulledPathRenderer.clear();
         this.heap.clear();
         this.mapData = JSON.parse(JSON.stringify(state.mapData)); // deep copy
         this.tileData = this.mapData.tileData;
@@ -56,8 +59,6 @@ export class PathFinder {
     }
 
     step = () => {
-        console.log("STEP");
-
         const heap = this.heap;
 
         if (!heap.isEmpty()) {
@@ -90,20 +91,55 @@ export class PathFinder {
 
         for (let position of this.finalPath) {
             this.pathRenderer.addNode(position);
-            console.log(position)
         }
 
+        this.pulledFinalPath = this.generatePulledPath(this.finalPath);
 
-        for (let i = 0; i < this.finalPath.length - 1; i++) {
-            const start = this.finalPath[i];
-            const end = this.finalPath[i + 1];
+        for (let position of this.pulledFinalPath) {
+            this.pulledPathRenderer.addNode(position);
+        }
+
+        // for (let i = 0; i < this.finalPath.length - 1; i++) {
+        //     const start = this.finalPath[i];
+        //     const end = this.finalPath[i + 1];
+        //     const grids = this.lineCheck(start, end);
+        //     this.renderGrids.push(...grids);
+        // }
+
+        for (let i = 0; i < this.pulledFinalPath.length - 1; i++) {
+            const start = this.pulledFinalPath[i];
+            const end = this.pulledFinalPath[i + 1];
             const grids = this.lineCheck(start, end);
             this.renderGrids.push(...grids);
         }
 
+
         // this.renderGrids = this.lineCheck(this.startPosition, this.endPosition);
+
         this.algorithmFinished = true;
         console.log("ALGORITHMN COMPLETE!");
+    }
+
+    generatePulledPath = (path) => {
+        const result = [];
+
+        let l = 0;
+        let r = l + 1;
+
+        while (r < path.length) {
+            if (this.checkValidLine(path[l], path[r])) {
+                r++;
+            } else {
+                result.push(path[l]);
+                l = r;
+                r = l + 1;
+            }
+        }
+
+        result.push(path[l]);
+        result.push(path[r - 1]);
+
+        return result;
     }
 
     addNeighborsToHeap = (node) => {
@@ -309,36 +345,82 @@ export class PathFinder {
         }
 
         // Trim ends of result
-        // if (stepAxis === 'x') {
-        //     if (this.startPosition.y % 1 === 0) {
-        //         if (this.startPosition.y < this.endPosition.y) {
-        //             console.log("SHIFTING Y");
-        //             result.shift();
-        //         }
-        //     }
+        if (stepAxis === 'x') {
+            if (this.startPosition.x < this.endPosition.x) {
+                if (this.startPosition.y % 1 === 0) {
+                    if (this.startPosition.y < this.endPosition.y) {
+                        result.shift();
+                    }
+                }
 
-        //     if (this.endPosition.y % 1 === 0) {
-        //         if (this.endPosition.y < this.startPosition.y) {
-        //             console.log("Popping Y");
-        //             result.splice(result.length - 2, 1);
-        //         }
-        //     }
-        // }
+                if (this.endPosition.y % 1 === 0) {
+                    if (this.endPosition.y < this.startPosition.y) {
+                        result.splice(result.length - 2, 1);
+                    }
+                }
+            } else {
+                if (this.endPosition.y % 1 === 0) {
+                    if (this.startPosition.y > this.endPosition.y) {
+                        result.shift();
+                    }
+                }
 
-        // if (stepAxis === 'y') {
-        //     if (this.startPosition.x % 1 === 0) {
-        //         if (this.startPosition.x > this.endPosition.x) {
-        //             result.pop();
-        //         }
-        //     }
+                if (this.startPosition.y % 1 === 0) {
+                    if (this.endPosition.y > this.startPosition.y) {
+                        result.splice(result.length - 2, 1);
+                        // result.pop();
+                    }
+                }
+            }
+        }
 
-        //     if (this.endPosition.x % 1 === 0) {
-        //         if (this.endPosition.x > this.startPosition.x) {
-        //             result.splice(1, 1);
+        if (stepAxis === 'y') {
+            if (this.startPosition.x < this.endPosition.x) {
+                if (this.startPosition.y < this.endPosition.y) {
+                    if (this.startPosition.x % 1 === 0) {
+                        if (this.startPosition.x > this.endPosition.x) {
+                            result.shift();
+                        }
+                    }
 
-        //         }
-        //     }
-        // }
+                    if (this.endPosition.x % 1 === 0) {
+                        if (this.endPosition.x > this.startPosition.x) {
+                            result.pop();
+                        }
+                    }
+                } else {
+
+                    if (this.endPosition.x % 1 === 0) {
+                        if (this.endPosition.x > this.startPosition.x) {
+                            console.log(result[1])
+                            result.splice(1, 1);
+                        }
+                    }
+                }
+            }
+
+            else if (this.startPosition.x > this.endPosition.x) {
+                if (this.startPosition.y < this.endPosition.y) {
+                    if (this.startPosition.x % 1 === 0) {
+                        if (this.startPosition.x > this.endPosition.x) {
+                            result.splice(1, 1);
+                        }
+                    }
+
+                    // if (this.endPosition.x % 1 === 0) {
+                    //     if (this.endPosition.x > this.startPosition.x) {
+                    //         result.pop();
+                    //     }
+                    // }
+                } else {
+                    if (this.startPosition.x % 1 === 0) {
+                        if (this.startPosition.x > this.endPosition.x) {
+                            result.pop();
+                        }
+                    }
+                }
+            }
+        }
 
         return result;
     }
@@ -403,6 +485,7 @@ export class PathFinder {
             }
         }
 
-        this.pathRenderer.render();
+        // this.pathRenderer.render();
+        this.pulledPathRenderer.render();
     }
 }
