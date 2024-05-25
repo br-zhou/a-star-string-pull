@@ -45,12 +45,23 @@ export class PathFinder {
         const goalPosition = this.mapData.goal;
 
         // insert start node into heap
-        this.heap.insert(new OctalNode(null, startPosition, 0, this.getDist(startPosition, goalPosition)));
+        let startNode = new OctalNode(null, startPosition, 0, this.getDist(startPosition, goalPosition));
+        if (startPosition.x % 1 !== 0 || startPosition.y % 1 !== 0) {
+            startNode = new OctalNode(startNode, this.convertPointToGrid(startPosition), 0, this.getDist(startPosition, goalPosition));
+        }
+        this.heap.insert(startNode);
 
         this.startPositionGrid = this.convertPointToGrid(startPosition);
         this.goalPositionGrid = this.convertPointToGrid(goalPosition);
         this.startPosition = startPosition;
-        this.endPosition = goalPosition;
+        if (goalPosition.x % 1 !== 0 || goalPosition.y % 1 !== 0) {
+            this.endPosition = this.convertPointToGrid(goalPosition);
+            this.realEndPosition = goalPosition;
+        } else {
+            this.endPosition = goalPosition;
+            this.realEndPosition = null;
+        }
+
         this.algorithmFinished = false;
         this.renderGrids = [];
 
@@ -65,8 +76,12 @@ export class PathFinder {
             const node = heap.remove();
             if (this.nodeIsGoal(node)) {
                 // TODO: this.finalPath = node.path;
-                this.finalPath = this.generatePath(node);
-
+                if (this.realEndPosition) {
+                    const finalNode =  new OctalNode(node, this.realEndPosition, 0, 0);
+                    this.finalPath = this.generatePath(finalNode);
+                } else {
+                    this.finalPath = this.generatePath(node);
+                }
                 this.endAlgorithmn();
                 return;
             } else {
