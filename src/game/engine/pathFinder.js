@@ -106,12 +106,12 @@ export class PathFinder {
         //     this.renderGrids.push(...grids);
         // }
 
-        for (let i = 0; i < this.pulledFinalPath.length - 1; i++) {
-            const start = this.pulledFinalPath[i];
-            const end = this.pulledFinalPath[i + 1];
-            const grids = this.lineCheck(start, end);
-            this.renderGrids.push(...grids);
-        }
+        // for (let i = 0; i < this.pulledFinalPath.length - 1; i++) {
+        //     const start = this.pulledFinalPath[i];
+        //     const end = this.pulledFinalPath[i + 1];
+        //     const grids = this.lineCheck(start, end);
+        //     this.renderGrids.push(...grids);
+        // }
 
 
         // this.renderGrids = this.lineCheck(this.startPosition, this.endPosition);
@@ -127,7 +127,7 @@ export class PathFinder {
         let l = 0;
 
         while (l < r) {
-            if (!this.checkValidLine(path[l], path[r])) {
+            if (!this.lineCheck(path[l], path[r])) {
                 l++;
             } else {
                 result.push(path[r]);
@@ -190,8 +190,8 @@ export class PathFinder {
 
     validNewNodePosition = (parentNode, offset) => {
         const position = new Vector2(parentNode.position.x + offset.x, parentNode.position.y + offset.y);
-        if (position.x < 0 || position.y < 0) return false;
-        if (position.x >= this.mapData.width || position.y >= this.mapData.height) return false;
+        if (position.x <= 0 || position.y <= 0) return false;
+        if (position.x >= this.mapData.width - 1 || position.y >= this.mapData.height - 1) return false;
 
         // avoid recalculating same position
         if (this.nodePositionAlreadyCalculated(position)) return false;
@@ -285,18 +285,6 @@ export class PathFinder {
         return result;
     }
 
-    checkValidLine = (start, end) => {
-        const gridCells = this.lineCheck(start, end);
-
-        for (let cell of gridCells) {
-            if (this.gridPositionContainsWall(cell)) {
-                return false;
-            }
-        }
-
-        return true;
-    }
-
     straightLineCheck = (start, end) => {
         const dx = end.x - start.x;
         const dy = end.y - start.y;
@@ -312,11 +300,11 @@ export class PathFinder {
                 // If bottom tile is a wall
                 if (this.gridPositionContainsWall(new Vector2(x, y), true)) {
                     console.log("BOTTOM WALL", x, y);
-                    return [new Vector2(x, y)];
+                    return false;
                 }
                 if (this.gridPositionContainsWall(new Vector2(x, y + 1), true)) {
                     console.log("TOP WALL")
-                    return [new Vector2(x, y + 1)];
+                    return false;
                 }
             }
         } else if (dx === 0) {
@@ -328,15 +316,15 @@ export class PathFinder {
                 // If right tile is a wall
                 if (this.gridPositionContainsWall(new Vector2(x, y), true)) {
                     console.log("BOTTOM WALL", x, y);
-                    return [new Vector2(x, y)];
+                    return false;
                 }
                 if (this.gridPositionContainsWall(new Vector2(x - 1, y), true)) {
                     console.log("LEFT WALL")
-                    return [new Vector2(x - 1, y)];
+                    return false;
                 }
             }
         }
-        return [];
+        return true;
     }
 
     lineCheck = (start, end) => {
@@ -476,7 +464,14 @@ export class PathFinder {
             }
         }
 
-        return result;
+        // get result
+        for (let cell of result) {
+            if (this.gridPositionContainsWall(cell, false)) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     getStepsFrom(a, b) {
