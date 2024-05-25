@@ -112,7 +112,7 @@ export class PathFinder {
             const grids = this.lineCheck(start, end);
             this.renderGrids.push(...grids);
         }
-        
+
 
         // this.renderGrids = this.lineCheck(this.startPosition, this.endPosition);
 
@@ -245,8 +245,18 @@ export class PathFinder {
         return new Vector2(parentNode.position.x + offset.x, parentNode.position.y + offset.y);
     }
 
-    gridPositionContainsWall = (gridPos) => {
-        return this.tileData[gridPos.x] && this.tileData[gridPos.x][gridPos.y];
+    gridPositionContainsWall = (gridPos, ignoreBarriers = false) => {
+        const BARRIER_TYPES = ["wall-barrier"]
+        const tileExists = this.tileData[gridPos.x] && this.tileData[gridPos.x][gridPos.y];
+        if (ignoreBarriers && tileExists) {
+            const tile = this.tileData[gridPos.x][gridPos.y];
+            for (let type of BARRIER_TYPES) {
+                if (tile === type) return false;
+            }
+            return true;
+        } else {
+            return Boolean(tileExists);
+        }
     }
 
     nodeIsGoal = (node) => {
@@ -287,10 +297,56 @@ export class PathFinder {
         return true;
     }
 
+    straightLineCheck = (start, end) => {
+        const dx = end.x - start.x;
+        const dy = end.y - start.y;
+
+        console.log("STRAIGHT LINE CHECK");
+
+        if (dy === 0) {
+            console.log("HORIZONTAL");
+            const y = start.y;
+            const startX = Math.min(start.x, end.x);
+            const endX = Math.max(start.x, end.x);
+            for (let x = startX; x < endX; x++) {
+                // If bottom tile is a wall
+                if (this.gridPositionContainsWall(new Vector2(x, y), true)) {
+                    console.log("BOTTOM WALL", x, y);
+                    return [new Vector2(x, y)];
+                }
+                if (this.gridPositionContainsWall(new Vector2(x, y + 1), true)) {
+                    console.log("TOP WALL")
+                    return [new Vector2(x, y + 1)];
+                }
+            }
+        } else if (dx === 0) {
+            console.log("VERTICAL");
+            const x = start.x;
+            const startY = Math.min(start.y, end.y);
+            const endY = Math.max(start.y, end.y);
+            for (let y = startY; y < endY; y++) {
+                // If right tile is a wall
+                if (this.gridPositionContainsWall(new Vector2(x, y), true)) {
+                    console.log("BOTTOM WALL", x, y);
+                    return [new Vector2(x, y)];
+                }
+                if (this.gridPositionContainsWall(new Vector2(x - 1, y), true)) {
+                    console.log("LEFT WALL")
+                    return [new Vector2(x - 1, y)];
+                }
+            }
+        }
+        return [];
+    }
+
     lineCheck = (start, end) => {
         const result = [];
         const dx = end.x - start.x;
         const dy = end.y - start.y;
+
+        if ((dx === 0 && start.x % 1 === 0) || (dy === 0 && start.y % 1 === 0)) {
+            return this.straightLineCheck(start, end);
+        }
 
         const stepAxis = Math.abs(dx) > Math.abs(dy) ? 'x' : 'y';
 
@@ -350,27 +406,27 @@ export class PathFinder {
 
         // Trim ends of result
         if (stepAxis === 'x') {
-            if (this.startPosition.x < this.endPosition.x) {
-                if (this.startPosition.y % 1 === 0) {
-                    if (this.startPosition.y < this.endPosition.y) {
+            if (start.x < end.x) {
+                if (start.y % 1 === 0) {
+                    if (start.y < end.y) {
                         result.shift();
                     }
                 }
 
-                if (this.endPosition.y % 1 === 0) {
-                    if (this.endPosition.y < this.startPosition.y) {
+                if (end.y % 1 === 0) {
+                    if (end.y < start.y) {
                         result.splice(result.length - 2, 1);
                     }
                 }
             } else {
-                if (this.endPosition.y % 1 === 0) {
-                    if (this.startPosition.y > this.endPosition.y) {
+                if (end.y % 1 === 0) {
+                    if (start.y > end.y) {
                         result.shift();
                     }
                 }
 
-                if (this.startPosition.y % 1 === 0) {
-                    if (this.endPosition.y > this.startPosition.y) {
+                if (start.y % 1 === 0) {
+                    if (end.y > start.y) {
                         result.splice(result.length - 2, 1);
                         // result.pop();
                     }
@@ -379,40 +435,40 @@ export class PathFinder {
         }
 
         if (stepAxis === 'y') {
-            if (this.startPosition.x < this.endPosition.x) {
-                if (this.startPosition.y < this.endPosition.y) {
-                    if (this.startPosition.x % 1 === 0) {
-                        if (this.startPosition.x > this.endPosition.x) {
+            if (start.x < end.x) {
+                if (start.y < end.y) {
+                    if (start.x % 1 === 0) {
+                        if (start.x > end.x) {
                             result.shift();
                         }
                     }
 
-                    if (this.endPosition.x % 1 === 0) {
-                        if (this.endPosition.x > this.startPosition.x) {
+                    if (end.x % 1 === 0) {
+                        if (end.x > start.x) {
                             result.pop();
                         }
                     }
                 } else {
 
-                    if (this.endPosition.x % 1 === 0) {
-                        if (this.endPosition.x > this.startPosition.x) {
+                    if (end.x % 1 === 0) {
+                        if (end.x > start.x) {
                             result.splice(1, 1);
                         }
                     }
                 }
             }
 
-            else if (this.startPosition.x > this.endPosition.x) {
-                if (this.startPosition.y < this.endPosition.y) {
-                    if (this.startPosition.x % 1 === 0) {
-                        if (this.startPosition.x > this.endPosition.x) {
+            else if (start.x > end.x) {
+                if (start.y < end.y) {
+                    if (start.x % 1 === 0) {
+                        if (start.x > end.x) {
                             result.splice(1, 1);
                         }
                     }
 
                 } else {
-                    if (this.startPosition.x % 1 === 0) {
-                        if (this.startPosition.x > this.endPosition.x) {
+                    if (start.x % 1 === 0) {
+                        if (start.x > end.x) {
                             result.pop();
                         }
                     }
