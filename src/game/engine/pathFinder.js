@@ -190,8 +190,8 @@ export class PathFinder {
 
     validNewNodePosition = (parentNode, offset) => {
         const position = new Vector2(parentNode.position.x + offset.x, parentNode.position.y + offset.y);
-        if (position.x <= 0 || position.y <= 0) return false;
-        if (position.x >= this.mapData.width - 1 || position.y >= this.mapData.height - 1) return false;
+        if (position.x < 0 || position.y < 0) return false;
+        if (position.x > this.mapData.width || position.y >= this.mapData.height) return false;
 
         // avoid recalculating same position
         if (this.nodePositionAlreadyCalculated(position)) return false;
@@ -200,25 +200,33 @@ export class PathFinder {
         if (this.pointIsOnDiagonalWall(position)) return false;
 
         if (offset.x === 0 && offset.y === 1) {
-            return !this.gridPositionContainsWall(this.getOffsetPosition(parentNode, new Vector2(0, 1))) ||
-                !this.gridPositionContainsWall(this.getOffsetPosition(parentNode, new Vector2(-1, 1)))
+            return !this.gridPositionContainsWall(this.getOffsetPosition(parentNode, new Vector2(0, 1)),) &&
+                !this.gridPositionContainsWall(this.getOffsetPosition(parentNode, new Vector2(-1, 1)),) &&
+                !this.gridPositionContainsWall(this.getOffsetPosition(parentNode, new Vector2(0, 2)),) &&
+                !this.gridPositionContainsWall(this.getOffsetPosition(parentNode, new Vector2(-1, 2)),)
         } else if (offset.x === 1 && offset.y === 1) {
-            return !this.gridPositionContainsWall(this.getOffsetPosition(parentNode, new Vector2(0, 1)))
+            return !this.gridPositionContainsWall(this.getOffsetPosition(parentNode, new Vector2(0, 1)), false)
         } else if (offset.x === 1 && offset.y === 0) {
-            return !this.gridPositionContainsWall(this.getOffsetPosition(parentNode, new Vector2(0, 0))) ||
-                !this.gridPositionContainsWall(this.getOffsetPosition(parentNode, new Vector2(0, 1)))
+            return !this.gridPositionContainsWall(this.getOffsetPosition(parentNode, new Vector2(0, 0)),) &&
+                !this.gridPositionContainsWall(this.getOffsetPosition(parentNode, new Vector2(0, 1)),) &&
+                !this.gridPositionContainsWall(this.getOffsetPosition(parentNode, new Vector2(1, 0)),) &&
+                !this.gridPositionContainsWall(this.getOffsetPosition(parentNode, new Vector2(1, 1)),)
         } else if (offset.x === 1 && offset.y === -1) {
-            return !this.gridPositionContainsWall(this.getOffsetPosition(parentNode, new Vector2(0, 0)))
+            return !this.gridPositionContainsWall(this.getOffsetPosition(parentNode, new Vector2(0, 0)), false)
         } else if (offset.x === 0 && offset.y === -1) {
-            return !this.gridPositionContainsWall(this.getOffsetPosition(parentNode, new Vector2(0, 0))) ||
-                !this.gridPositionContainsWall(this.getOffsetPosition(parentNode, new Vector2(-1, 0)))
+            return !this.gridPositionContainsWall(this.getOffsetPosition(parentNode, new Vector2(0, 0)),) &&
+                !this.gridPositionContainsWall(this.getOffsetPosition(parentNode, new Vector2(-1, 0)),) &&
+                !this.gridPositionContainsWall(this.getOffsetPosition(parentNode, new Vector2(0, -1)),) &&
+                !this.gridPositionContainsWall(this.getOffsetPosition(parentNode, new Vector2(-1, -1)),)
         } else if (offset.x === -1 && offset.y === -1) {
-            return !this.gridPositionContainsWall(this.getOffsetPosition(parentNode, new Vector2(-1, 0)))
+            return !this.gridPositionContainsWall(this.getOffsetPosition(parentNode, new Vector2(-1, 0)), false)
         } else if (offset.x === -1 && offset.y === 0) {
-            return !this.gridPositionContainsWall(this.getOffsetPosition(parentNode, new Vector2(-1, 0))) ||
-                !this.gridPositionContainsWall(this.getOffsetPosition(parentNode, new Vector2(-1, 1)))
+            return !this.gridPositionContainsWall(this.getOffsetPosition(parentNode, new Vector2(-1, 0)),) &&
+                !this.gridPositionContainsWall(this.getOffsetPosition(parentNode, new Vector2(-1, 1)),) && 
+                !this.gridPositionContainsWall(this.getOffsetPosition(parentNode, new Vector2(-2, 0)),) &&
+                !this.gridPositionContainsWall(this.getOffsetPosition(parentNode, new Vector2(-2, 1)),)
         } else if (offset.x === -1 && offset.y === 1) {
-            return !this.gridPositionContainsWall(this.getOffsetPosition(parentNode, new Vector2(-1, 1)))
+            return !this.gridPositionContainsWall(this.getOffsetPosition(parentNode, new Vector2(-1, 1)), false)
         }
 
 
@@ -245,7 +253,7 @@ export class PathFinder {
         return new Vector2(parentNode.position.x + offset.x, parentNode.position.y + offset.y);
     }
 
-    gridPositionContainsWall = (gridPos, ignoreBarriers = false) => {
+    gridPositionContainsWall = (gridPos, ignoreBarriers = true) => {
         const BARRIER_TYPES = ["wall-barrier"]
         const tileExists = this.tileData[gridPos.x] && this.tileData[gridPos.x][gridPos.y];
         if (ignoreBarriers && tileExists) {
