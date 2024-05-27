@@ -83,6 +83,9 @@ const reducer = (state = initialState, action) => {
             result.mapData.goal = new Vector2(action.x, action.y);
             // result.mapData.goal = new Vector2(Math.round(action.x), Math.round(action.y));
             return result;
+        case "load-map":
+            result.mapData = action.mapData;
+            return result;
         case "add-tile":
             if (!tileData[action.x]) {
                 tileData[action.x] = {};
