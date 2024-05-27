@@ -4,7 +4,7 @@ import SettingsModal from "./Settings/SettingsModal";
 import TutorialModal from "./TutorialModal";
 
 const Menubar = () => {
-    const GITHUB_URL = "https://github.com/br-zhou/path-finder-react";
+    const GITHUB_URL = "https://github.com/br-zhou/a-star-string-pull";
     const isSearching = useSelector(state => state.isSearching);
 
     const [settingsModal, setSettingsModal] = useState(false);
