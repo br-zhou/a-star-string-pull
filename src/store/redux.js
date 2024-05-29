@@ -9,6 +9,7 @@ const initialState = {
         width: 25,
         height: 25,
         tileData: {},
+        pathData: {},
         start: null,
         goal: null,
     },
@@ -16,23 +17,76 @@ const initialState = {
     stepDelay: 10,
 };
 
-const addBarrierTile = (mapData, x, y, ) => {
-    const tileData = mapData.tileData;
-    if (!tileData[x]) {
-        tileData[x] = {};
+const WALL = 1
+const WALL_BARRIER = 2
+
+const setPathTile = (mapData, x, y, type) => {
+    const pathData = mapData.pathData;
+    if (!pathData[x]) pathData[x] = {};
+
+    if (pathData[x][y] && pathData[x][y] === WALL) return; // ignore walls
+    if (x < 0 || y < 0) return;
+    if (x >= mapData.width * 2 || y >= mapData.height * 2) return;
+
+    pathData[x][y] = type;
+}
+
+const isWall = (mapData, x, y) => {
+    const pathData = mapData.pathData;
+    return (pathData[x] && pathData[x][y] === WALL)
+}
+
+const canDeleteBarrier = (mapData, x, y) => {
+    const pathData = mapData.pathData;
+    if (!pathData[x] || !pathData[x][y]) return false;
+
+    const type = pathData[x][y];
+
+    if (type === WALL) return false;
+
+    if (isWall(mapData, x - 1, y + 1)) return false;
+    if (isWall(mapData, x + 0, y + 1)) return false;
+    if (isWall(mapData, x + 1, y + 1)) return false;
+    if (isWall(mapData, x + 1, y + 0)) return false;
+    if (isWall(mapData, x + 1, y - 1)) return false;
+    if (isWall(mapData, x + 0, y - 1)) return false;
+    if (isWall(mapData, x - 1, y - 1)) return false;
+    if (isWall(mapData, x - 1, y - 0)) return false;
+
+    return true;
+}
+
+const needsBarrier = (mapData, x, y) => {
+    if (isWall(mapData, x - 1, y + 1)) return true;
+    if (isWall(mapData, x + 0, y + 1)) return true;
+    if (isWall(mapData, x + 1, y + 1)) return true;
+    if (isWall(mapData, x + 1, y + 0)) return true;
+    if (isWall(mapData, x + 1, y - 1)) return true;
+    if (isWall(mapData, x + 0, y - 1)) return true;
+    if (isWall(mapData, x - 1, y - 1)) return true;
+    if (isWall(mapData, x - 1, y - 0)) return true;
+
+    return false;
+}
+const erasePathTile = (mapData, x, y, type) => {
+    const pathData = mapData.pathData;
+    if (!pathData[x]) return;
+    if (!pathData[x][y]) return;
+
+    if (type === WALL) {
+        delete pathData[x][y];
+    } else if (canDeleteBarrier(mapData, x, y)) {
+        delete pathData[x][y];
     }
 
-    if (tileData[x][y] && tileData[x][y] === "wall") return; // ignore walls
-    if (x < 0 || y < 0) return;
-    if (x >= mapData.width || y >= mapData.height) return;
-    
-    tileData[x][y] = "wall-barrier";
+    if (Object.keys(pathData[x]).length === 0) delete pathData[x];
 }
 
 const reducer = (state = initialState, action) => {
     let result = { ...state };
 
     const tileData = result.mapData.tileData;
+    const pathData = result.mapData.pathData;
 
     switch (action.type) {
         case "update-settings":
@@ -95,18 +149,26 @@ const reducer = (state = initialState, action) => {
 
             tileData[action.x][action.y] = "wall";
 
-            addBarrierTile(result.mapData, action.x, action.y + 1);
-            addBarrierTile(result.mapData, action.x + 1, action.y + 1);
-            addBarrierTile(result.mapData, action.x + 1, action.y);
-            addBarrierTile(result.mapData, action.x + 1, action.y - 1);
-            addBarrierTile(result.mapData, action.x, action.y - 1);
-            addBarrierTile(result.mapData, action.x - 1, action.y - 1);
-            addBarrierTile(result.mapData, action.x - 1, action.y);
-            addBarrierTile(result.mapData, action.x - 1, action.y + 1);
+            setPathTile(result.mapData, action.x * 2, action.y * 2, WALL);
+            setPathTile(result.mapData, action.x * 2 + 1, action.y * 2, WALL);
+            setPathTile(result.mapData, action.x * 2, action.y * 2 - 1, WALL);
+            setPathTile(result.mapData, action.x * 2 + 1, action.y * 2 - 1, WALL);
 
+            setPathTile(result.mapData, action.x * 2 - 1, action.y * 2 + 1, WALL_BARRIER);
+            setPathTile(result.mapData, action.x * 2, action.y * 2 + 1, WALL_BARRIER);
+            setPathTile(result.mapData, action.x * 2 + 1, action.y * 2 + 1, WALL_BARRIER);
+            setPathTile(result.mapData, action.x * 2 + 2, action.y * 2 + 1, WALL_BARRIER);
 
+            setPathTile(result.mapData, action.x * 2 + 2, action.y * 2, WALL_BARRIER);
+            setPathTile(result.mapData, action.x * 2 + 2, action.y * 2 - 1, WALL_BARRIER);
 
-            
+            setPathTile(result.mapData, action.x * 2 + 2, action.y * 2 - 2, WALL_BARRIER);
+            setPathTile(result.mapData, action.x * 2 + 1, action.y * 2 - 2, WALL_BARRIER);
+            setPathTile(result.mapData, action.x * 2 + 0, action.y * 2 - 2, WALL_BARRIER);
+            setPathTile(result.mapData, action.x * 2 - 1, action.y * 2 - 2, WALL_BARRIER);
+
+            setPathTile(result.mapData, action.x * 2 - 1, action.y * 2, WALL_BARRIER);
+            setPathTile(result.mapData, action.x * 2 - 1, action.y * 2 - 1, WALL_BARRIER);
 
             // add walk barriers
 
@@ -123,6 +185,34 @@ const reducer = (state = initialState, action) => {
                     }
                 }
             }
+  
+            erasePathTile(result.mapData, action.x * 2, action.y * 2, WALL);
+            erasePathTile(result.mapData, action.x * 2 + 1, action.y * 2, WALL);
+            erasePathTile(result.mapData, action.x * 2, action.y * 2 - 1, WALL);
+            erasePathTile(result.mapData, action.x * 2 + 1, action.y * 2 - 1, WALL);
+
+            if (needsBarrier(result.mapData, action.x * 2, action.y * 2, WALL)) setPathTile(result.mapData, action.x * 2, action.y * 2, WALL_BARRIER);
+            if (needsBarrier(result.mapData, action.x * 2 + 1, action.y * 2, WALL)) setPathTile(result.mapData, action.x * 2 + 1, action.y * 2, WALL_BARRIER);
+            if (needsBarrier(result.mapData, action.x * 2, action.y * 2 - 1, WALL)) setPathTile(result.mapData, action.x * 2, action.y * 2 - 1, WALL_BARRIER);
+            if (needsBarrier(result.mapData, action.x * 2 + 1, action.y * 2 - 1, WALL)) setPathTile(result.mapData, action.x * 2 + 1, action.y * 2 - 1, WALL_BARRIER);
+
+
+            erasePathTile(result.mapData, action.x * 2 - 1, action.y * 2 + 1, WALL_BARRIER);
+            erasePathTile(result.mapData, action.x * 2, action.y * 2 + 1, WALL_BARRIER);
+            erasePathTile(result.mapData, action.x * 2 + 1, action.y * 2 + 1, WALL_BARRIER);
+            erasePathTile(result.mapData, action.x * 2 + 2, action.y * 2 + 1, WALL_BARRIER);
+
+            erasePathTile(result.mapData, action.x * 2 + 2, action.y * 2, WALL_BARRIER);
+            erasePathTile(result.mapData, action.x * 2 + 2, action.y * 2 - 1, WALL_BARRIER);
+
+            erasePathTile(result.mapData, action.x * 2 + 2, action.y * 2 - 2, WALL_BARRIER);
+            erasePathTile(result.mapData, action.x * 2 + 1, action.y * 2 - 2, WALL_BARRIER);
+            erasePathTile(result.mapData, action.x * 2 + 0, action.y * 2 - 2, WALL_BARRIER);
+            erasePathTile(result.mapData, action.x * 2 - 1, action.y * 2 - 2, WALL_BARRIER);
+
+            erasePathTile(result.mapData, action.x * 2 - 1, action.y * 2, WALL_BARRIER);
+            erasePathTile(result.mapData, action.x * 2 - 1, action.y * 2 - 1, WALL_BARRIER);
+
             return result;
         case "delete-tile":
             // delete walls
@@ -137,6 +227,7 @@ const reducer = (state = initialState, action) => {
                     delete tileData[action.x];
                 }
             }
+
             return result;
         default:
             return {

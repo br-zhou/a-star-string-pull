@@ -31,7 +31,6 @@ const HotBar = () => {
           type: "load-map",
           mapData: JSON.parse(mapData),
         });
-        console.log(mapData);
         fileInput.remove();
       };
 

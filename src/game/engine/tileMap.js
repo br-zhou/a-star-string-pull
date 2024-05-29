@@ -35,7 +35,7 @@ export class TileMap {
         for (const gridY of Object.keys(this.mapData_.tileData[gridX])) {
           const tileData = this.mapData_.tileData[gridX][gridY];
           let tileColor = "rgba(255,0,0,0.15)";
-          
+
           if (tileData === "wall") {
             tileColor = "#3A3B3C";
           }
@@ -50,6 +50,27 @@ export class TileMap {
             tileColor
           );
         }
+      }
+    }
+
+    for (const gridX of Object.keys(this.mapData_.pathData)) {
+      for (const gridY of Object.keys(this.mapData_.pathData[gridX])) {
+        const pathData = this.mapData_.pathData[gridX][gridY];
+        let tileColor = "rgba(255,0,0,0.15)";
+
+        if (pathData === 2) {
+          tileColor = "rgba(255,255,255,0.15)";
+        }
+
+        this.tools.drawRect(
+          {
+            x: gridX * TILE_SIZE / 2 + MAP_OFFSET.x,
+            y: gridY * TILE_SIZE / 2 + MAP_OFFSET.y,
+          },
+          TILE_SIZE / 2,
+          TILE_SIZE / 2,
+          tileColor
+        );
       }
     }
 
