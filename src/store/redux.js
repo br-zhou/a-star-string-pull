@@ -25,8 +25,8 @@ const setPathTile = (mapData, x, y, type) => {
     if (!pathData[x]) pathData[x] = {};
 
     if (pathData[x][y] && pathData[x][y] === WALL) return; // ignore walls
-    if (x < 0 || y < 0) return;
-    if (x >= mapData.width * 2 || y >= mapData.height * 2) return;
+    if (x < 0 || y < -1) return;
+    if (x >= mapData.width * 2 || y >= mapData.height * 2 - 1) return;
 
     pathData[x][y] = type;
 }
