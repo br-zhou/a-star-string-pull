@@ -44,6 +44,11 @@ export class Vector2 {
     this.y = vector.y;
   }
 
+  scale(num) {
+    this.x *= num;
+    this.y *= num;
+  }
+
   toRadians() {
     return Math.atan2(this.y, this.x);
   }

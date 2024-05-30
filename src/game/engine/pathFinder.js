@@ -16,7 +16,6 @@ export class PathFinder {
         this.heap = new Heap(this.nodeSortFunction);
         this.stepDelay = null;
         this.finalPath = [];
-        this.pathRenderer = new PathRenderer();
         this.pulledPathRenderer = new PathRenderer();
         this.pulledPathRenderer.pathColor = "rgba(0, 255, 0, 0.5)";
     }
@@ -33,16 +32,18 @@ export class PathFinder {
 
     startSearch = (state) => {
         this.finalPath = [];
-        this.pathRenderer.clear();
         this.pulledPathRenderer.clear();
         this.heap.clear();
         this.mapData = JSON.parse(JSON.stringify(state.mapData)); // deep copy
-        this.tileData = this.mapData.tileData;
+        this.pathData = this.mapData.pathData;
         this.stepDelay = state.stepDelay;
         this.usedNodes = {};
 
-        const startPosition = this.mapData.start;
-        const goalPosition = this.mapData.goal;
+        const startPosition = Vector2.copy(this.mapData.start);
+        const goalPosition = Vector2.copy(this.mapData.goal);
+
+        startPosition.scale(2);
+        goalPosition.scale(2);
 
         // insert start node into heap
         let startNode = new OctalNode(null, startPosition, 0, this.getDist(startPosition, goalPosition));
@@ -77,7 +78,7 @@ export class PathFinder {
             if (this.nodeIsGoal(node)) {
                 // TODO: this.finalPath = node.path;
                 if (this.realEndPosition) {
-                    const finalNode =  new OctalNode(node, this.realEndPosition, 0, 0);
+                    const finalNode = new OctalNode(node, this.realEndPosition, 0, 0);
                     this.finalPath = this.generatePath(finalNode);
                 } else {
                     this.finalPath = this.generatePath(node);
@@ -104,32 +105,13 @@ export class PathFinder {
     endAlgorithmn() {
         clearInterval(this.stepIntervalId);
 
-        for (let position of this.finalPath) {
-            this.pathRenderer.addNode(position);
-        }
-
         this.pulledFinalPath = this.generatePulledPath(this.finalPath);
 
         for (let position of this.pulledFinalPath) {
-            this.pulledPathRenderer.addNode(position);
+            const point = Vector2.copy(position)
+            point.scale(1 / 2);
+            this.pulledPathRenderer.addNode(point);
         }
-
-        // for (let i = 0; i < this.finalPath.length - 1; i++) {
-        //     const start = this.finalPath[i];
-        //     const end = this.finalPath[i + 1];
-        //     const grids = this.lineCheck(start, end);
-        //     this.renderGrids.push(...grids);
-        // }
-
-        // for (let i = 0; i < this.pulledFinalPath.length - 1; i++) {
-        //     const start = this.pulledFinalPath[i];
-        //     const end = this.pulledFinalPath[i + 1];
-        //     const grids = this.lineCheck(start, end);
-        //     this.renderGrids.push(...grids);
-        // }
-
-
-        // this.renderGrids = this.lineCheck(this.startPosition, this.endPosition);
 
         this.algorithmFinished = true;
         console.log("ALGORITHMN COMPLETE!");
@@ -206,7 +188,7 @@ export class PathFinder {
     validNewNodePosition = (parentNode, offset) => {
         const position = new Vector2(parentNode.position.x + offset.x, parentNode.position.y + offset.y);
         if (position.x < 0 || position.y < 0) return false;
-        if (position.x > this.mapData.width || position.y >= this.mapData.height) return false;
+        if (position.x > this.mapData.width * 2 || position.y >= this.mapData.height * 2) return false;
 
         // avoid recalculating same position
         if (this.nodePositionAlreadyCalculated(position)) return false;
@@ -237,7 +219,7 @@ export class PathFinder {
             return !this.gridPositionContainsWall(this.getOffsetPosition(parentNode, new Vector2(-1, 0)), false)
         } else if (offset.x === -1 && offset.y === 0) {
             return !this.gridPositionContainsWall(this.getOffsetPosition(parentNode, new Vector2(-1, 0)),) &&
-                !this.gridPositionContainsWall(this.getOffsetPosition(parentNode, new Vector2(-1, 1)),) && 
+                !this.gridPositionContainsWall(this.getOffsetPosition(parentNode, new Vector2(-1, 1)),) &&
                 !this.gridPositionContainsWall(this.getOffsetPosition(parentNode, new Vector2(-2, 0)),) &&
                 !this.gridPositionContainsWall(this.getOffsetPosition(parentNode, new Vector2(-2, 1)),)
         } else if (offset.x === -1 && offset.y === 1) {
@@ -269,10 +251,10 @@ export class PathFinder {
     }
 
     gridPositionContainsWall = (gridPos, ignoreBarriers = true) => {
-        const BARRIER_TYPES = ["wall-barrier"]
-        const tileExists = this.tileData[gridPos.x] && this.tileData[gridPos.x][gridPos.y];
+        const BARRIER_TYPES = [2]
+        const tileExists = this.pathData[gridPos.x] && this.pathData[gridPos.x][gridPos.y];
         if (ignoreBarriers && tileExists) {
-            const tile = this.tileData[gridPos.x][gridPos.y];
+            const tile = this.pathData[gridPos.x][gridPos.y];
             for (let type of BARRIER_TYPES) {
                 if (tile === type) return false;
             }
@@ -531,16 +513,13 @@ export class PathFinder {
     render() {
         if (!this.isSearching) return;
 
-        // this.tileMap.colorGrid(this.startPositionGrid, "rgba(0, 255, 0, 0.25)");
-        // this.tileMap.colorGrid(this.goalPositionGrid, "rgba(255, 0, 0, 0.25)");
-
         for (let node of this.heap.nodes_) {
             this.tools.drawCircle(
                 {
-                    x: node.position.x * TILE_SIZE,
-                    y: node.position.y * TILE_SIZE
+                    x: node.position.x * TILE_SIZE / 2,
+                    y: node.position.y * TILE_SIZE / 2
                 },
-                1 / 4,
+                1 / 8,
                 "rgba(255,255,255,0.5)"
             );
         }
@@ -557,7 +536,6 @@ export class PathFinder {
             }
         }
 
-        // this.pathRenderer.render();
         this.pulledPathRenderer.render();
     }
 }

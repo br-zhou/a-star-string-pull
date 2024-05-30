@@ -86,7 +86,6 @@ const reducer = (state = initialState, action) => {
     let result = { ...state };
 
     const tileData = result.mapData.tileData;
-    const pathData = result.mapData.pathData;
 
     switch (action.type) {
         case "update-settings":
@@ -126,6 +125,7 @@ const reducer = (state = initialState, action) => {
             return result;
         case "clear-map":
             result.mapData.tileData = {};
+            result.mapData.pathData = {};
             result.mapData.start = null;
             result.mapData.goal = null;
             return result;
