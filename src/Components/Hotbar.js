@@ -21,7 +21,8 @@ const HotBar = () => {
       if (Object.keys(pathData[x]).length === 0) continue;
       hackedPathData[x] = {};
       for (let y in pathData[x]) {
-        hackedPathData[x][Number(y) - 1] = 1;
+        const value = pathData[x][y];
+        hackedPathData[x][Number(y) - 1] = value;
       }
     }
 
@@ -63,7 +64,8 @@ const HotBar = () => {
       if (Object.keys(pathData[x]).length === 0) continue;
       hackedPathData[x] = {};
       for (let y in pathData[x]) {
-        hackedPathData[x][Number(y) + 1] = 1;
+        const value = pathData[x][y];
+        hackedPathData[x][Number(y) + 1] = value;
       }
     }
 
