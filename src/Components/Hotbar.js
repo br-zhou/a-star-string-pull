@@ -13,6 +13,21 @@ const HotBar = () => {
     store.dispatch({ type: "toggle-search" });
   }
 
+  const hackImport = (mapData) => {
+    const pathData = mapData.pathData;
+
+    const hackedPathData = {};
+    for (let x in pathData) {
+      if (Object.keys(pathData[x]).length === 0) continue;
+      hackedPathData[x] = {};
+      for (let y in pathData[x]) {
+        hackedPathData[x][Number(y) - 1] = 1;
+      }
+    }
+
+    mapData.pathData = hackedPathData;
+  }
+
   const importMap = () => {
     const fileInput = document.createElement("input");
     fileInput.type = "file";
@@ -25,11 +40,13 @@ const HotBar = () => {
       const fileReader = new FileReader();
 
       fileReader.onload = () => {
-        const mapData = fileReader.result;
+        const mapDataStr = fileReader.result;
+        const mapData = JSON.parse(mapDataStr);
 
+        hackImport(mapData);
         store.dispatch({
           type: "load-map",
-          mapData: JSON.parse(mapData),
+          mapData: mapData,
         });
         fileInput.remove();
       };
@@ -38,11 +55,27 @@ const HotBar = () => {
     };
   };
 
+  const hackExport = (mapData) => {
+    const pathData = mapData.pathData;
+
+    const hackedPathData = {};
+    for (let x in pathData) {
+      if (Object.keys(pathData[x]).length === 0) continue;
+      hackedPathData[x] = {};
+      for (let y in pathData[x]) {
+        hackedPathData[x][Number(y) + 1] = 1;
+      }
+    }
+
+    mapData.pathData = hackedPathData;
+  }
 
   const exportMap = () => {
     const { mapData } = store.getState();
     delete mapData.start;
     delete mapData.goal;
+
+    hackExport(mapData);
 
     const file = new Blob([JSON.stringify(mapData)], {
       type: "application/json",
